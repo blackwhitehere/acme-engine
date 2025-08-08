@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template for ECS Task Definition.'
+
+Parameters:
+  ClusterName:
+    Type: String
+    Description: Name of the ECS Cluster to register the task definition with
+  TaskDefinitionName:
+    Type: String
+    Description: Name for the ECS Task Definition
+  ContainerImage:
+    Type: String
+    Description: Container image URI
+  ExecutionRoleArn:
+    Type: String
+    Description: ARN of the ECS execution role
+  TaskRoleArn:
+    Type: String
+    Description: ARN of the ECS task role
+  Cpu:
+    Type: Number
+    Default: 1024
+    Description: vCPU units for the task (1 vCPU = 1024)
+  Memory:
+    Type: Number
+    Default: 2048
+    Description: Memory (MiB) for the task
+  LogGroupName:
+    Type: String
+    Description: Name of the CloudWatch Log Group
+
+Resources:
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Ref TaskDefinitionName
+      Cpu: !Ref Cpu
+      Memory: !Ref Memory
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !Ref ExecutionRoleArn
+      TaskRoleArn: !Ref TaskRoleArn
+      ContainerDefinitions:
+        - Name: !Ref TaskDefinitionName
+          Image: !Ref ContainerImage
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroupName
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: ecs
+          Essential: true
+
+Outputs:
+  TaskDefinitionArn:
+    Description: ARN of the ECS Task Definition
+    Value: !Ref TaskDefinition

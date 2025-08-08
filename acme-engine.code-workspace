@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../acme-portal-sdk"
+		},
+		{
+			"path": "../acme-prefect"
+		},
+		{
+			"path": "../acme-portal"
+		},
+		{
+			"path": "../acme-web"
+		}
+	],
+	"settings": {}
+}
