@@ -1,12 +1,44 @@
-When possible make code easy to change in the future.
-Isolate distinct concerns into distinct components because that makes code easy to change.
-Create components with single reponsibilities because that makes them easy to change.
-Name things well becasue that makes code easy to read and make changes to.
-Allow for design decisions to be reversed because that makes code easy to change when new requirements arrive.
+This repository is a Python 3.12 project named "acme_engine" that provides a compute/orchestration engine for batch jobs on AWS ECS/Fargate with Step Functions, plus a small SDK. Use these instructions when proposing or implementing changes (including by Copilot coding agent).
 
-Adhere to DRY (don't repeat yourself) principle if possible. Centralize definition of the same knowledge and use it in all places it's used. When possible attempt to refactor code to obey this principle.
+## Development flow
 
-Design systems to have orthogonal functionality.
+- Environment: Python 3.12 with uv managing dependencies (pyproject + uv.lock)
+- Install deps (preferred): `uv sync --dev` (or run `./create_env.sh` locally)
+- Lint/format: `ruff check .` and `ruff format --check .` (fix with `ruff format .`)
+- Tests: `pytest -q`
+- Docs (MkDocs): `mkdocs build -f docs/mkdocs.yml`
 
-Check for python typing information in method signatures is correct and if documentation needs to be updated to reflect existing funcionality.
-Keep documentation concise but informative and avoid excess comments that just describe what code is doing.
+Copilot acceptance criteria for PRs:
+- Code compiles and type-checks; ruff passes; tests pass; docs build succeeds
+- Public APIs keep or improve type hints and docstrings
+- Changes are scoped, reversible, and easy to review (single responsibility)
+
+## Repository structure (high level)
+- `src/acme_engine/`: library and CLI (`ae`) sources
+- `tests/`: unit/integration tests
+- `docs/`: MkDocs site (material theme, mkdocstrings)
+- `example/`: sample flows/usages
+- `admin/`: scripts for local ops
+
+## Code standards
+- Prefer small, composable functions and modules; separate concerns clearly
+- Adhere to DRY: centralize shared logic/config where feasible
+- Name things precisely and consistently; optimize for readability
+- Keep decisions reversible; pass dependencies via parameters where sensible
+- Maintain Python typing in signatures and ensure docs reflect behavior
+- Keep docs concise and practical; avoid comments that restate obvious code
+
+## Testing guidelines
+- Use pytest; write focused tests with clear arrange/act/assert
+- Mock cloud/service calls (e.g., boto3) by default; avoid network or AWS usage in unit tests
+- Add at least a happy-path test and one edge case for new behavior
+
+## Docs guidelines
+- Update or add user-facing docs for any new feature or CLI change
+- Keep `docs/mkdocs.yml` and navigation consistent; short examples > long prose
+
+## CI and tooling (for Copilot)
+- Prefer uv for dependency sync; use Python 3.12
+- Run ruff and pytest in CI; build docs to catch regressions
+
+Tip: If you need to add tools or packages for Copilot’s ephemeral env, use `.github/workflows/copilot-setup-steps.yml` with a single `copilot-setup-steps` job.
