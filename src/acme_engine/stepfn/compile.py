@@ -1,8 +1,9 @@
 """
 Step Function definition generator for running flows as ECS jobs.
 
-Generates a definition that invokes our container and runs the runtime runner
-(`acme_engine.runtime.run_flow`) to execute a Python callable by import path.
+Generates a definition that starts a container task and passes parameters
+via container environment variables. The image's own entrypoint is expected
+to read these parameters and execute the target callable.
 """
 import json
 from pathlib import Path
@@ -29,19 +30,19 @@ def compile_step_function(
     log_group: Optional[str] = None,
 ) -> None:
     """
-    Generates a Step Function definition for running a Prefect flow in ECS.
-    Writes the definition to output_path as JSON.
+    Generates a Step Function definition for running a flow in ECS.
+    Writes the definition to ``output_path`` as JSON.
 
     Args:
         output_path (Path): Path to write the Step Function definition JSON file.
-        state_machine_name (str): Name of the Step Function state machine and ECS container override.
+    state_machine_name (str): Name of the Step Function state machine and ECS container override.
         cluster (str): ECS cluster name or ARN to run the task in.
         task_definition (str): ECS task definition ARN or family:revision to use.
         subnets (list, optional): List of subnet IDs for the ECS task networking. If None, uses default subnets.
         security_groups (list, optional): List of security group IDs for the ECS task networking. If None, uses default security groups.
-        flow_path (str): Path to the Prefect flow script inside the container.
-        args (list, optional): Positional arguments to pass to the flow script (as command line args).
-        kwargs (dict, optional): Keyword arguments to pass to the flow script (as environment variables).
+    flow_path (str): Import path to the target callable inside the container (e.g. "pkg.mod:func").
+    args (list, optional): Positional arguments to pass to the callable (JSON-serialized into env var).
+    kwargs (dict, optional): Keyword arguments to pass to the callable (JSON-serialized into env var).
         launch_type (str, optional): ECS launch type (default: "FARGATE").
     """
     args = list(args or [])
@@ -71,18 +72,16 @@ def compile_step_function(
                         "ContainerOverrides": [
                             {
                                 "Name": state_machine_name,
-                                "Command": [
-                                    "python",
-                                    "-m",
-                                    "acme_engine.runtime.run_flow",
-                                    "--target",
-                                    flow_path,
-                                    "--args",
-                                    json.dumps(args),
-                                    "--kwargs",
-                                    json.dumps({k: v for k, v in kwargs.items()}),
+                                # Pass inputs to the container via environment variables.
+                                # The container entrypoint is responsible for consuming these.
+                                "Environment": [
+                                    {"Name": "AE_TARGET", "Value": flow_path},
+                                    {"Name": "AE_ARGS_JSON", "Value": json.dumps(args)},
+                                    {
+                                        "Name": "AE_KWARGS_JSON",
+                                        "Value": json.dumps({k: v for k, v in kwargs.items()}),
+                                    },
                                 ],
-                                # No environment is strictly required; use command JSON
                             }
                         ]
                     },

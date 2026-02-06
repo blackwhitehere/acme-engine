@@ -21,7 +21,9 @@ def test_compile_generates_valid_definition(tmp_path: Path):
     assert data["StartAt"] == "RunPrefectFlow"
     params = data["States"]["RunPrefectFlow"]["Parameters"]
     assert params["Cluster"] == "my-cluster"
-    cmd = params["Overrides"]["ContainerOverrides"][0]["Command"]
-    # Ensure runner is used and args/kwargs are present as JSON
-    assert cmd[:4] == ["python", "-m", "acme_engine.runtime.run_flow", "--target"]
-    assert "--args" in cmd and "--kwargs" in cmd
+    env = params["Overrides"]["ContainerOverrides"][0]["Environment"]
+    # Ensure environment variables include target and args/kwargs as JSON
+    env_map = {e["Name"]: e["Value"] for e in env}
+    assert env_map["AE_TARGET"] == "pkg.mod:func"
+    assert json.loads(env_map["AE_ARGS_JSON"]) == ["a", 1]
+    assert json.loads(env_map["AE_KWARGS_JSON"]) == {"k": "v"}
