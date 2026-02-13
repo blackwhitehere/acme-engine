@@ -77,3 +77,6 @@ TODO.md
 
 # ruff
 .ruff_cache/
+# DuckDB
+*.duckdb
+*.duckdb.wal
